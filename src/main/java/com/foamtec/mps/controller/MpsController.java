@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/mps")
@@ -103,13 +100,59 @@ public class MpsController {
     }
 
     @RequestMapping(value = "/findgroupbyid", method = RequestMethod.POST, headers = "Content-Type=Application/json")
-    public ResponseEntity<String> findUserById(@RequestBody Map<String, Long> data, HttpServletRequest request) throws ServletException {
+    public ResponseEntity<String> findGroupById(@RequestBody Map<String, Long> data, HttpServletRequest request) throws ServletException {
         securityService.checkToken(request);
         GroupForecast groupForecast = mpsService.findById(data.get("id"));
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("groupName", groupForecast.getGroupName());
             jsonObject.put("groupType", groupForecast.getGroupType());
+            jsonObject.put("totalPart", groupForecast.getProducts().size());
+
+            JSONArray jsonArray = new JSONArray();
+            int i = 1;
+            for(Product p : groupForecast.getProducts()) {
+                JSONObject jsonObjectPart = new JSONObject();
+                jsonObjectPart.put("no", i);
+                jsonObjectPart.put("id", p.getId());
+                jsonObjectPart.put("part", p.getPartNumber());
+                jsonArray.put(jsonObjectPart);
+                i++;
+            }
+
+            jsonObject.put("dataForecast", jsonArray);
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("fail");
+        }
+    }
+
+    @RequestMapping(value = "/findgroupbyidanddate", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> findGroupByIdAndDate(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        String[] dates = data.get("dateT").split(",");
+        GroupForecast groupForecast = mpsService.findById(Long.parseLong(data.get("id")));
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("groupName", groupForecast.getGroupName());
+            jsonObject.put("groupType", groupForecast.getGroupType());
+            jsonObject.put("totalPart", groupForecast.getProducts().size());
+
+            JSONArray jsonArray = new JSONArray();
+            int i = 1;
+            for(Product p : groupForecast.getProducts()) {
+                JSONObject jsonObjectPart = new JSONObject();
+                jsonObjectPart.put("no", i);
+                jsonObjectPart.put("id", p.getId());
+                jsonObjectPart.put("part", p.getPartNumber());
+                for(int b = 0; b < dates.length; b++) {
+                    jsonObjectPart.put(dates[b], 0);
+                }
+                jsonArray.put(jsonObjectPart);
+                i++;
+            }
+
+            jsonObject.put("dataForecast", jsonArray);
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("fail");
@@ -186,6 +229,25 @@ public class MpsController {
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("get fail");
+        }
+    }
+
+    @RequestMapping(value = "/createforcast", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> createForcast(@RequestBody Map<String, Object> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        JSONObject jsonObjectInput = new JSONObject(data);
+        JSONArray jsonArray = jsonObjectInput.getJSONArray("dataAll");
+
+        Iterator<String> keys = jsonArray.getJSONObject(0).keys();
+        while (keys.hasNext()) {
+            System.out.println(keys.next());
+        }
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("message", "ok");
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("fail");
         }
     }
 }
