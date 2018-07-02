@@ -1,7 +1,9 @@
 package com.foamtec.mps.service;
 
+import com.foamtec.mps.model.Forecast;
 import com.foamtec.mps.model.GroupForecast;
 import com.foamtec.mps.model.Product;
+import com.foamtec.mps.repository.ForecastRepository;
 import com.foamtec.mps.repository.GroupForecastRepository;
 import com.foamtec.mps.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,19 +20,22 @@ public class MpsService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ForecastRepository forecastRepository;
+
     public List<GroupForecast> findAllGroupForecast() {
         return groupForecastRepository.findAll();
     }
 
-    public GroupForecast save(GroupForecast groupForecast) {
+    public GroupForecast saveGroupForecast(GroupForecast groupForecast) {
         return groupForecastRepository.save(groupForecast);
     }
 
-    public GroupForecast findById(Long id) {
+    public GroupForecast findByIdGroupForecast(Long id) {
         return groupForecastRepository.findById(id);
     }
 
-    public GroupForecast update(GroupForecast groupForecast) {
+    public GroupForecast updateGroupForecast(GroupForecast groupForecast) {
         return groupForecastRepository.save(groupForecast);
     }
 
@@ -44,6 +49,10 @@ public class MpsService {
 
     public GroupForecast findGroupById(Long id) {
         return groupForecastRepository.findById(id);
+    }
+
+    public Product findProductById(Long id) {
+        return productRepository.findById(id);
     }
 
     public Product findProductByPartNumber(String partNumber) {
@@ -60,5 +69,17 @@ public class MpsService {
 
     public List<Product> searchProductsByGroupLimit(String text, GroupForecast groupForecast, int start, int limit) {
         return productRepository.searchProductsByGroupLimit(text, groupForecast, start, limit);
+    }
+
+    public Forecast saveForecast(Forecast forecast) {
+        return forecastRepository.save(forecast);
+    }
+
+    public Forecast updateForecast(Forecast forecast) {
+        return forecastRepository.update(forecast);
+    }
+
+    public Forecast findForecastByForecastNo(String forecastNo) {
+        return forecastRepository.findByForecastNo(forecastNo);
     }
 }
