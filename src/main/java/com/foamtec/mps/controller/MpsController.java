@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.util.*;
 
@@ -317,6 +318,7 @@ public class MpsController {
                 mapPartSap.put(s.getPartNumber(),s.getCodeSap());
             }
 
+            Set<Integer> weekSet = new HashSet<>();
             for(String strPart : setPart) {
                 Map<String, Boolean> mapPart = new HashMap<>();
                 mapPart.put(strPart, true);
@@ -329,13 +331,26 @@ public class MpsController {
                     if(mapPart.get(s.getPartNumber()) != null) {
                         cal.setTime(s.getForecastDate());
                         jsonObjectPart.put("week" + cal.get(Calendar.WEEK_OF_YEAR), s.getQty());
+                        weekSet.add(cal.get(Calendar.WEEK_OF_YEAR));
                     }
                 }
                 jsonArray.put(jsonObjectPart);
-                System.out.println("======= " + jsonObjectPart + "=======");
             }
 
+            int iWeek = 0;
+            int[] weekInt = new int[weekSet.size()];
+            for(Integer week: weekSet) {
+                weekInt[iWeek] = week;
+                iWeek ++;
+            }
+
+            Arrays.sort(weekInt);
+            JSONArray jsonArrayWeek = new JSONArray();
+            for(int w: weekInt) {
+                jsonArrayWeek.put("week" + w);
+            }
             jsonObject.put("dataForecast", jsonArray);
+            jsonObject.put("weeks", jsonArrayWeek);
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("fail");
