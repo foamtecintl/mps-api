@@ -39,6 +39,10 @@ public class MpsService {
         return groupForecastRepository.save(groupForecast);
     }
 
+    public void deleteProduct(Product product) {
+        productRepository.delete(product.getId());
+    }
+
     public List<GroupForecast> searchGroupForecast(String text) {
         return groupForecastRepository.searchGroupForecast(text);
     }

@@ -35,6 +35,22 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public void delete(Long id) {
+        try {
+            String sqlStr = "DELETE FROM GROUP_FORECAST_PRODUCTS WHERE PRODUCTS_ID = :id";
+            Query nativeQuery = entityManager.createNativeQuery(sqlStr);
+            nativeQuery.setParameter("id", id);
+            nativeQuery.executeUpdate();
+            sqlStr = "DELETE FROM PRODUCT WHERE ID = :id";
+            nativeQuery = entityManager.createNativeQuery(sqlStr);
+            nativeQuery.setParameter("id", id);
+            nativeQuery.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public Product findByCodeSap(String codeSap) {
         Query query = entityManager.createQuery("SELECT a FROM Product a WHERE a.codeSap = :codeSap");
         query.setParameter("codeSap", codeSap);
