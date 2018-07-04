@@ -7,10 +7,13 @@ import com.foamtec.mps.model.SubForecast;
 import com.foamtec.mps.service.MainService;
 import com.foamtec.mps.service.MpsService;
 import com.foamtec.mps.service.SecurityService;
+import org.apache.poi.sl.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +22,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import java.lang.reflect.Array;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 
@@ -165,6 +169,42 @@ public class MpsController {
         } catch (Exception e) {
             throw new ServletException("fail");
         }
+    }
+
+    @RequestMapping(value = "/downloadexceltemplate", method = RequestMethod.GET)
+    public void downloadExcelTemplate(@RequestParam("id") Long id, @RequestParam("dateT") String dateT, HttpServletResponse response) throws ServletException, IOException {
+        String[] dates = dateT.split(",");
+        GroupForecast groupForecast = mpsService.findByIdGroupForecast(id);
+        XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFSheet sheet = wb.createSheet();
+
+        XSSFRow row1 = sheet.createRow(0);
+        row1.createCell(0).setCellValue("Part Number");
+        row1.createCell(1).setCellValue("Code SAP");
+        int column = 2;
+        for(int b = 0; b < dates.length; b++) {
+            row1.createCell(b + 2).setCellValue(dates[b]);
+            column++;
+        }
+
+        int i = 1;
+        for(Product p : groupForecast.getProducts()) {
+            XSSFRow row = sheet.createRow(i);
+            row.createCell(0).setCellValue(p.getPartNumber());
+            row.createCell(1).setCellValue(p.getCodeSap());
+            for(int b = 0; b < dates.length; b++) {
+                row.createCell(b + 2).setCellValue(0);
+            }
+            i++;
+        }
+
+        for(int c = 0; c < column; c++) {
+            sheet.autoSizeColumn(c);
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment;filename=" + groupForecast.getGroupName().replace(" ", "-") + ".xlsx");
+        wb.write(response.getOutputStream());
     }
 
     @RequestMapping(value = "/createpart", method = RequestMethod.POST, headers = "Content-Type=Application/json")
