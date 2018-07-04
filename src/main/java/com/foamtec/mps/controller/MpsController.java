@@ -4,6 +4,7 @@ import com.foamtec.mps.model.Forecast;
 import com.foamtec.mps.model.GroupForecast;
 import com.foamtec.mps.model.Product;
 import com.foamtec.mps.model.SubForecast;
+import com.foamtec.mps.repository.ProductRepository;
 import com.foamtec.mps.service.MainService;
 import com.foamtec.mps.service.MpsService;
 import com.foamtec.mps.service.SecurityService;
@@ -56,26 +57,6 @@ public class MpsController {
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("save fail");
-        }
-    }
-
-    @RequestMapping(value = "/updategroup", method = RequestMethod.POST, headers = "Content-Type=Application/json")
-    public ResponseEntity<String> updateGroup(@RequestBody Map<String, String> group, HttpServletRequest request) throws ServletException {
-        securityService.checkToken(request);
-        String idStr = group.get("id");
-        String groupName = group.get("groupName");
-        String groupType = group.get("groupType");
-        GroupForecast groupForecast = mpsService.findByIdGroupForecast(Long.parseLong(idStr));
-        groupForecast.setUpdateDate(new Date());
-        groupForecast.setGroupName(groupName);
-        groupForecast.setGroupType(groupType);
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("message", "success");
-            jsonObject.put("id", mpsService.updateGroupForecast(groupForecast).getId());
-            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
-        } catch (Exception e) {
-            throw new ServletException("update fail");
         }
     }
 
@@ -207,6 +188,39 @@ public class MpsController {
         wb.write(response.getOutputStream());
     }
 
+    @RequestMapping(value = "/updateforecastbyexcelfile", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> updateForecastByExcelFile(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        String[] dates = data.get("dateT").split(",");
+        GroupForecast groupForecast = mpsService.findByIdGroupForecast(Long.parseLong(data.get("id")));
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("groupName", groupForecast.getGroupName());
+            jsonObject.put("groupType", groupForecast.getGroupType());
+            jsonObject.put("totalPart", groupForecast.getProducts().size());
+
+            JSONArray jsonArray = new JSONArray();
+            int i = 1;
+            for(Product p : groupForecast.getProducts()) {
+                JSONObject jsonObjectPart = new JSONObject();
+                jsonObjectPart.put("no", i);
+                jsonObjectPart.put("id", p.getId());
+                jsonObjectPart.put("part", p.getPartNumber());
+                jsonObjectPart.put("sap", p.getCodeSap());
+                for(int b = 0; b < dates.length; b++) {
+                    jsonObjectPart.put(dates[b], 0);
+                }
+                jsonArray.put(jsonObjectPart);
+                i++;
+            }
+
+            jsonObject.put("dataForecast", jsonArray);
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("fail");
+        }
+    }
+
     @RequestMapping(value = "/createpart", method = RequestMethod.POST, headers = "Content-Type=Application/json")
     public ResponseEntity<String> createPart(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
         securityService.checkToken(request);
@@ -241,6 +255,20 @@ public class MpsController {
         try {
             jsonObject.put("message", "success");
             jsonObject.put("id", mpsService.updateGroupForecast(groupForecast).getId());
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("save fail");
+        }
+    }
+
+    @RequestMapping(value = "/deletepart", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> deletePart(@RequestBody Map<String, Long> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            Product product = mpsService.findProductById(data.get("id"));
+            mpsService.deleteProduct(product);
+            jsonObject.put("message", "success");
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("save fail");
