@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,6 +24,11 @@ public class MainService {
         String s = String.format("%02d", Long.parseLong(df[1])) + "/" + String.format("%02d", Long.parseLong(df[0])) + "/" + df[2];
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         return formatter.parse(s);
+    }
+
+    public String dateToString(Date date) {
+        DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        return df.format(date);
     }
 
     public Long saveFile(byte[] stream, String fileName, String contentType) throws IOException {

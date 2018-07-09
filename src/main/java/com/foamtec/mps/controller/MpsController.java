@@ -409,11 +409,13 @@ public class MpsController {
             }
 
             Set<Integer> weekSet = new HashSet<>();
+            int no = 1;
             for(String strPart : setPart) {
                 Map<String, Boolean> mapPart = new HashMap<>();
                 mapPart.put(strPart, true);
 
                 JSONObject jsonObjectPart = new JSONObject();
+                jsonObjectPart.put("no", no);
                 jsonObjectPart.put("part", strPart);
                 jsonObjectPart.put("codeSap", mapPartSap.get(strPart));
 
@@ -425,6 +427,7 @@ public class MpsController {
                     }
                 }
                 jsonArray.put(jsonObjectPart);
+                no++;
             }
 
             int iWeek = 0;
@@ -444,6 +447,68 @@ public class MpsController {
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("fail");
+        }
+    }
+
+    @RequestMapping(value = "/searchdashboardslimit", method = RequestMethod.GET, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> searchDashboardsLimit(@RequestParam(value = "start", required = true) Integer start,
+                                                    @RequestParam(value = "limit", required = true) Integer limit,
+                                                    @RequestParam(value = "searchText", required = true) String searchText,
+                                                    HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        int totalGroup = mpsService.searchForecast(searchText).size();
+        List<Forecast> forecasts = mpsService.searchForecastLimit(searchText, start, limit);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            int i = start;
+            JSONArray jsonArray = new JSONArray();
+            for(Forecast f : forecasts) {
+                i++;
+                JSONObject jsonObjectGroup = new JSONObject();
+                jsonObjectGroup.put("id", f.getId());
+                jsonObjectGroup.put("no", i);
+                jsonObjectGroup.put("forecastNo", f.getForecastNumber());
+                jsonObjectGroup.put("groupName", f.getForecastGroup());
+                jsonObjectGroup.put("totalPart", f.getTotalPart());
+                jsonObjectGroup.put("createDate", mainService.dateToString(f.getCreateDate()));
+                jsonArray.put(jsonObjectGroup);
+            }
+
+            jsonObject.put("totalItem", totalGroup);
+            jsonObject.put("dashborad", jsonArray);
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("get user fail");
+        }
+    }
+
+    @RequestMapping(value = "/searchdashboardspartlimit", method = RequestMethod.GET, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> searchDashboardsPartLimit(@RequestParam(value = "start", required = true) Integer start,
+                                                        @RequestParam(value = "limit", required = true) Integer limit,
+                                                        @RequestParam(value = "searchText", required = true) String searchText,
+                                                        HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        int totalGroup = mpsService.searchPart(searchText).size();
+        List<Product> products = mpsService.searchPartLimit(searchText, start, limit);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            int i = start;
+            JSONArray jsonArray = new JSONArray();
+            for(Product p : products) {
+                i++;
+                JSONObject jsonObjectGroup = new JSONObject();
+                jsonObjectGroup.put("id", p.getId());
+                jsonObjectGroup.put("no", i);
+                jsonObjectGroup.put("part", p.getPartNumber());
+                jsonObjectGroup.put("groupName", p.getGroupForecast().getGroupName());
+                jsonArray.put(jsonObjectGroup);
+            }
+
+            jsonObject.put("totalItemPart", totalGroup);
+            jsonObject.put("dashboardPart", jsonArray);
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("get user fail");
         }
     }
 }
