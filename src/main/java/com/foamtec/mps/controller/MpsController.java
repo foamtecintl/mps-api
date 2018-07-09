@@ -9,6 +9,9 @@ import com.foamtec.mps.service.MainService;
 import com.foamtec.mps.service.MpsService;
 import com.foamtec.mps.service.SecurityService;
 import org.apache.poi.sl.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -24,7 +27,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.*;
 
@@ -160,21 +165,23 @@ public class MpsController {
         XSSFSheet sheet = wb.createSheet();
 
         XSSFRow row1 = sheet.createRow(0);
-        row1.createCell(0).setCellValue("Part Number");
-        row1.createCell(1).setCellValue("Code SAP");
-        int column = 2;
+        row1.createCell(0).setCellValue("#");
+        row1.createCell(1).setCellValue("Part Number");
+        row1.createCell(2).setCellValue("Code SAP");
+        int column = 3;
         for(int b = 0; b < dates.length; b++) {
-            row1.createCell(b + 2).setCellValue(dates[b]);
+            row1.createCell(b + 3).setCellValue(dates[b]);
             column++;
         }
 
         int i = 1;
         for(Product p : groupForecast.getProducts()) {
             XSSFRow row = sheet.createRow(i);
-            row.createCell(0).setCellValue(p.getPartNumber());
-            row.createCell(1).setCellValue(p.getCodeSap());
+            row.createCell(0).setCellValue(i+"");
+            row.createCell(1).setCellValue(p.getPartNumber());
+            row.createCell(2).setCellValue(p.getCodeSap());
             for(int b = 0; b < dates.length; b++) {
-                row.createCell(b + 2).setCellValue(0);
+                row.createCell(b + 3).setCellValue(0 + "");
             }
             i++;
         }
@@ -188,32 +195,47 @@ public class MpsController {
         wb.write(response.getOutputStream());
     }
 
-    @RequestMapping(value = "/updateforecastbyexcelfile", method = RequestMethod.POST, headers = "Content-Type=Application/json")
-    public ResponseEntity<String> updateForecastByExcelFile(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
-        securityService.checkToken(request);
-        String[] dates = data.get("dateT").split(",");
-        GroupForecast groupForecast = mpsService.findByIdGroupForecast(Long.parseLong(data.get("id")));
-        JSONObject jsonObject = new JSONObject();
+    @RequestMapping(value = "/updateforecastbyexcelfile", method = RequestMethod.POST, headers = "Accept=application/json")
+    @ResponseBody
+    public ResponseEntity<String> updateForecastByExcelFile(MultipartHttpServletRequest multipartHttpServletRequest) throws ServletException {
+        securityService.checkToken(multipartHttpServletRequest);
+        MultipartFile multipartFile = multipartHttpServletRequest.getFile("file");
         try {
-            jsonObject.put("groupName", groupForecast.getGroupName());
-            jsonObject.put("groupType", groupForecast.getGroupType());
-            jsonObject.put("totalPart", groupForecast.getProducts().size());
+            XSSFWorkbook wb = new XSSFWorkbook(multipartFile.getInputStream());
+            XSSFSheet sheet = wb.getSheetAt(0);
 
+            int lastRows = sheet.getLastRowNum();
+            int columns = sheet.getRow(0).getLastCellNum();
+
+            JSONObject jsonObject = new JSONObject();
             JSONArray jsonArray = new JSONArray();
-            int i = 1;
-            for(Product p : groupForecast.getProducts()) {
-                JSONObject jsonObjectPart = new JSONObject();
-                jsonObjectPart.put("no", i);
-                jsonObjectPart.put("id", p.getId());
-                jsonObjectPart.put("part", p.getPartNumber());
-                jsonObjectPart.put("sap", p.getCodeSap());
-                for(int b = 0; b < dates.length; b++) {
-                    jsonObjectPart.put(dates[b], 0);
-                }
-                jsonArray.put(jsonObjectPart);
-                i++;
-            }
 
+            for(int i = 1; i <= lastRows; i++) {
+                JSONObject jsonObjectData = new JSONObject();
+                XSSFRow row = sheet.getRow(i);
+                for(int j = 0; j < columns; j++) {
+                    if(j == 0) {
+                        row.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+                        String strInt = row.getCell(j).getStringCellValue();
+                        jsonObjectData.put("no", Integer.parseInt(strInt));
+                    }
+                    if(j == 1) {
+                        row.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+                        jsonObjectData.put("part", row.getCell(j).getStringCellValue());
+                    }
+                    if(j == 2) {
+                        row.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+                        jsonObjectData.put("sap", row.getCell(j).getStringCellValue());
+                    }
+                    if(j > 2) {
+                        row.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+                        String strInt = row.getCell(j).getStringCellValue();
+                        jsonObjectData.put(sheet.getRow(0).getCell(j).getStringCellValue(), Integer.parseInt(strInt));
+                    }
+                }
+                jsonArray.put(jsonObjectData);
+            }
+            jsonObject.put("message", "success");
             jsonObject.put("dataForecast", jsonArray);
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
