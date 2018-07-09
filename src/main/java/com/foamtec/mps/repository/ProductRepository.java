@@ -12,4 +12,6 @@ public interface ProductRepository {
     Product findByCodeSap(String codeSap);
     List<Product> searchProductsByGroup(String text, GroupForecast groupForecast);
     List<Product> searchProductsByGroupLimit(String text, GroupForecast groupForecast, int start, int limit);
+    List<Product> searchPart(String text);
+    List<Product> searchPartLimit(String text, int start, int limit);
 }

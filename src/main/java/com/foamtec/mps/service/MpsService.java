@@ -86,4 +86,20 @@ public class MpsService {
     public Forecast findForecastByForecastNo(String forecastNo) {
         return forecastRepository.findByForecastNo(forecastNo);
     }
+
+    public List<Forecast> searchForecast(String text) {
+        return forecastRepository.searchForecast(text);
+    }
+
+    public List<Forecast> searchForecastLimit(String text, int start, int limit) {
+        return forecastRepository.searchForecastLimit(text, start, limit);
+    }
+
+    public List<Product> searchPart(String text) {
+        return productRepository.searchPart(text);
+    }
+
+    public List<Product> searchPartLimit(String text, int start, int limit) {
+        return productRepository.searchPartLimit(text, start, limit);
+    }
 }

@@ -88,4 +88,28 @@ public class ProductRepositoryImpl implements ProductRepository {
         query.setFirstResult(start);
         return query.getResultList();
     }
+
+    @Override
+    public List<Product> searchPart(String text) {
+        String searchText = "%";
+        if(text.length() > 0) {
+            searchText = "%" + text + "%";
+        }
+        Query query = entityManager.createQuery("SELECT a FROM Product a WHERE a.partNumber LIKE :text");
+        query.setParameter("text", searchText);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Product> searchPartLimit(String text, int start, int limit) {
+        String searchText = "%";
+        if(text.length() > 0) {
+            searchText = "%" + text + "%";
+        }
+        Query query = entityManager.createQuery("SELECT a FROM Product a WHERE a.partNumber LIKE :text");
+        query.setParameter("text", searchText);
+        query.setMaxResults(limit);
+        query.setFirstResult(start);
+        return query.getResultList();
+    }
 }
