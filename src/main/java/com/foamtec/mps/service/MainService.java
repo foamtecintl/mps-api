@@ -1,11 +1,14 @@
 package com.foamtec.mps.service;
 
+import com.foamtec.mps.model.FileData;
 import com.foamtec.mps.model.InformationFileData;
 import com.foamtec.mps.repository.InformationFileDataRepository;
+import org.apache.poi.util.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -50,5 +53,21 @@ public class MainService {
         informationFileData.setUrl("/" + informationFileData.getId() + "/" + fileName);
         informationFileDataRepository.update(informationFileData);
         return informationFileData;
+    }
+
+
+    public FileData getFileName(Long id) throws IOException {
+        InformationFileData informationFileData = informationFileDataRepository.findById(id);
+        String name = informationFileData.getFileName();
+        String contentType = informationFileData.getContentType();
+        String workingDir = System.getProperty("user.dir") + "/fileData/" + informationFileData.getId() + "/";
+        File file = new File(workingDir + informationFileData.getFileName());
+        FileInputStream fis = new FileInputStream(file);
+        byte[] data = IOUtils.toByteArray(fis);
+        FileData fileData = new FileData();
+        fileData.setFileName(name);
+        fileData.setContentType(contentType);
+        fileData.setDataFile(data);
+        return fileData;
     }
 }

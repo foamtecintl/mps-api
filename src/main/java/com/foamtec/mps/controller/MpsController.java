@@ -1,9 +1,6 @@
 package com.foamtec.mps.controller;
 
-import com.foamtec.mps.model.Forecast;
-import com.foamtec.mps.model.GroupForecast;
-import com.foamtec.mps.model.Product;
-import com.foamtec.mps.model.SubForecast;
+import com.foamtec.mps.model.*;
 import com.foamtec.mps.repository.ProductRepository;
 import com.foamtec.mps.service.MainService;
 import com.foamtec.mps.service.MpsService;
@@ -335,6 +332,10 @@ public class MpsController {
     public ResponseEntity<String> createForcast(MultipartHttpServletRequest multipartHttpServletRequest) throws ServletException, ParseException {
         try {
             securityService.checkToken(multipartHttpServletRequest);
+            MultipartFile file = multipartHttpServletRequest.getFile("file");
+            if(file == null) {
+                throw new ServletException("Not file upload.");
+            }
             JSONObject jsonObjectInput = new JSONObject(multipartHttpServletRequest.getParameter("data"));
             JSONArray jsonArray = jsonObjectInput.getJSONArray("dataAll");
             String groupId = jsonObjectInput.getString("groupId");
@@ -372,7 +373,6 @@ public class MpsController {
                 }
             }
 
-            MultipartFile file = multipartHttpServletRequest.getFile("file");
             Long idInsert = mainService.saveFile(file.getBytes(), file.getOriginalFilename(), file.getContentType());
             forecast.setForecastFile(idInsert);
 
@@ -385,7 +385,7 @@ public class MpsController {
             jsonObject.put("forecastNumber", forecast.getForecastNumber());
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
-            throw new ServletException("fail");
+            throw new ServletException(e);
         }
     }
 
@@ -509,6 +509,20 @@ public class MpsController {
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
             throw new ServletException("get user fail");
+        }
+    }
+
+    @RequestMapping(value = "/file/{no}", method = RequestMethod.GET)
+    @ResponseBody
+    public void downloadFile(@PathVariable("no") String no, HttpServletResponse response) {
+        try {
+            Forecast forecast = mpsService.findForecastByForecastNo(no);
+            FileData fileData = mainService.getFileName(forecast.getForecastFile());
+            response.setContentType(fileData.getContentType());
+            response.setHeader("Content-Disposition", "inline;filename=" + fileData.getFileName());
+            response.getOutputStream().write(fileData.getDataFile());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
