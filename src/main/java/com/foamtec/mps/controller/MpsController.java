@@ -519,7 +519,7 @@ public class MpsController {
             Forecast forecast = mpsService.findForecastByForecastNo(no);
             FileData fileData = mainService.getFileName(forecast.getForecastFile());
             response.setContentType(fileData.getContentType());
-            response.setHeader("Content-Disposition", "inline;filename=" + fileData.getFileName());
+            response.setHeader("Content-Disposition", "inline;filename=" + fileData.getFileName().replace(" ", "-"));
             response.getOutputStream().write(fileData.getDataFile());
         } catch (Exception e) {
             e.printStackTrace();
