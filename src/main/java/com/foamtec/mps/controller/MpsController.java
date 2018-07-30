@@ -422,8 +422,10 @@ public class MpsController {
                 for(SubForecast s : forecast.getSubForecasts()) {
                     if(mapPart.get(s.getPartNumber()) != null) {
                         cal.setTime(s.getForecastDate());
-                        jsonObjectPart.put("week" + cal.get(Calendar.WEEK_OF_YEAR), s.getQty());
-                        weekSet.add(cal.get(Calendar.WEEK_OF_YEAR));
+                        jsonObjectPart.put(cal.get(Calendar.YEAR) + "week" + String.format("%02d", cal.get(Calendar.WEEK_OF_YEAR)), s.getQty());
+                        String weekOfYear = cal.get(Calendar.YEAR) + "" + String.format("%02d", cal.get(Calendar.WEEK_OF_YEAR));
+                        int weekOfYearInt = Integer.parseInt(weekOfYear);
+                        weekSet.add(weekOfYearInt);
                     }
                 }
                 jsonArray.put(jsonObjectPart);
@@ -440,12 +442,14 @@ public class MpsController {
             Arrays.sort(weekInt);
             JSONArray jsonArrayWeek = new JSONArray();
             for(int w: weekInt) {
-                jsonArrayWeek.put("week" + w);
+                String weekIntStr = "" + w;
+                jsonArrayWeek.put(weekIntStr.substring(0,4) + "week" + weekIntStr.substring(4,6));
             }
             jsonObject.put("dataForecast", jsonArray);
             jsonObject.put("weeks", jsonArrayWeek);
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ServletException("fail");
         }
     }
