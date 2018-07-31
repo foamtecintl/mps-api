@@ -3,9 +3,11 @@ package com.foamtec.mps.service;
 import com.foamtec.mps.model.Forecast;
 import com.foamtec.mps.model.GroupForecast;
 import com.foamtec.mps.model.Product;
+import com.foamtec.mps.model.SubForecast;
 import com.foamtec.mps.repository.ForecastRepository;
 import com.foamtec.mps.repository.GroupForecastRepository;
 import com.foamtec.mps.repository.ProductRepository;
+import com.foamtec.mps.repository.SubForecastRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,9 @@ public class MpsService {
 
     @Autowired
     private ForecastRepository forecastRepository;
+
+    @Autowired
+    private SubForecastRepository subForecastRepository;
 
     public List<GroupForecast> findAllGroupForecast() {
         return groupForecastRepository.findAll();
@@ -101,5 +106,9 @@ public class MpsService {
 
     public List<Product> searchPartLimit(String text, int start, int limit) {
         return productRepository.searchPartLimit(text, start, limit);
+    }
+
+    public List<SubForecast> findSubForecastByPartNumber(String partNumber) {
+        return subForecastRepository.findByPartNumber(partNumber);
     }
 }

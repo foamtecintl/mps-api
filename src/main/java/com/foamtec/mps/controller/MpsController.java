@@ -1,14 +1,10 @@
 package com.foamtec.mps.controller;
 
 import com.foamtec.mps.model.*;
-import com.foamtec.mps.repository.ProductRepository;
 import com.foamtec.mps.service.MainService;
 import com.foamtec.mps.service.MpsService;
 import com.foamtec.mps.service.SecurityService;
-import org.apache.poi.sl.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -24,9 +20,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.ParseException;
 import java.util.*;
 
@@ -389,7 +383,7 @@ public class MpsController {
         }
     }
 
-    @RequestMapping(value = "/findgforecastbyforecastno", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    @RequestMapping(value = "/findforecastbyforecastno", method = RequestMethod.POST, headers = "Content-Type=Application/json")
     public ResponseEntity<String> findForecastByForecastNo(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
         securityService.checkToken(request);
         Forecast forecast = mpsService.findForecastByForecastNo(data.get("forecastNo"));
@@ -527,6 +521,65 @@ public class MpsController {
             response.getOutputStream().write(fileData.getDataFile());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @RequestMapping(value = "/findforecastbyparttotable", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> findForecastByPartToTable(@RequestBody Map<String, String> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        String partNumber = data.get("partNo");
+        JSONObject jsonObject = new JSONObject();
+        try {
+            List<SubForecast> subForecastList = mpsService.findSubForecastByPartNumber(partNumber);
+            Set<String> setForecastNumber = new TreeSet<>();
+            for (SubForecast sub : subForecastList) {
+                setForecastNumber.add(sub.getForecast().getForecastNumber());
+            }
+            JSONArray jsonArray = new JSONArray();
+            Calendar cal = Calendar.getInstance();
+            int no = 1;
+            Set<Integer> weekSet = new HashSet<>();
+            for (String itemSet : setForecastNumber) {
+                Map<String, String> mapForecastNo = new HashMap<>();
+                mapForecastNo.put(itemSet, "true");
+                Forecast forecast = mpsService.findForecastByForecastNo(itemSet);
+
+                JSONObject jsonObjectForecast = new JSONObject();
+                jsonObjectForecast.put("no", no);
+                jsonObjectForecast.put("forecastNumber", itemSet);
+                jsonObjectForecast.put("createDate", mainService.dateToString(forecast.getCreateDate()).split(" ")[0]);
+                for (SubForecast sub : subForecastList) {
+                    if (mapForecastNo.get(sub.getForecast().getForecastNumber()) != null) {
+                        cal.setTime(sub.getForecastDate());
+                        jsonObjectForecast.put(cal.get(Calendar.YEAR) + "week" + String.format("%02d", cal.get(Calendar.WEEK_OF_YEAR)), sub.getQty());
+                        String weekOfYear = cal.get(Calendar.YEAR) + "" + String.format("%02d", cal.get(Calendar.WEEK_OF_YEAR));
+                        int weekOfYearInt = Integer.parseInt(weekOfYear);
+                        weekSet.add(weekOfYearInt);
+                    }
+                }
+                jsonArray.put(jsonObjectForecast);
+                no++;
+            }
+
+            int iWeek = 0;
+            int[] weekInt = new int[weekSet.size()];
+            for (Integer week : weekSet) {
+                weekInt[iWeek] = week;
+                iWeek++;
+            }
+
+            Arrays.sort(weekInt);
+            JSONArray jsonArrayWeek = new JSONArray();
+            for (int w : weekInt) {
+                String weekIntStr = "" + w;
+                jsonArrayWeek.put(weekIntStr.substring(0, 4) + "week" + weekIntStr.substring(4, 6));
+            }
+            jsonObject.put("dataForecastCompare", jsonArray);
+            jsonObject.put("weeks", jsonArrayWeek);
+            jsonObject.put("partNumber", partNumber);
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("fail");
         }
     }
 }
