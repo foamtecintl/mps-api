@@ -36,6 +36,10 @@ public class MpsService {
         return groupForecastRepository.save(groupForecast);
     }
 
+    public void deleteGroupForecast(GroupForecast groupForecast) {
+        groupForecastRepository.deleteGroup(groupForecast);
+    }
+
     public GroupForecast findByIdGroupForecast(Long id) {
         return groupForecastRepository.findById(id);
     }
