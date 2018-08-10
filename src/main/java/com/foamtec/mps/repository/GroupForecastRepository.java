@@ -9,6 +9,7 @@ public interface GroupForecastRepository {
     GroupForecast findById(Long id);
     GroupForecast findByGroupName(String groupName);
     GroupForecast save(GroupForecast groupForecast);
+    void deleteGroup(GroupForecast groupForecast);
     GroupForecast update(GroupForecast groupForecast);
     List<GroupForecast> searchGroupForecast(String text);
     List<GroupForecast> searchGroupForecastLimit(String text, int start, int limit);

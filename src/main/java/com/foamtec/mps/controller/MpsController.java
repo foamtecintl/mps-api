@@ -56,6 +56,39 @@ public class MpsController {
         }
     }
 
+    @RequestMapping(value = "/editgroup", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> editGroup(@RequestBody Map<String, String> group, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        String idGroup = group.get("idGroup");
+        String groupName = group.get("groupName");
+        String groupType = group.get("groupType");
+        GroupForecast groupForecast = mpsService.findByIdGroupForecast(Long.parseLong(idGroup));
+        groupForecast.setGroupName(groupName);
+        groupForecast.setGroupType(groupType);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("message", "success");
+            jsonObject.put("id", mpsService.updateGroupForecast(groupForecast).getId());
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("save fail");
+        }
+    }
+
+    @RequestMapping(value = "/deletegroup", method = RequestMethod.POST, headers = "Content-Type=Application/json")
+    public ResponseEntity<String> deleteGroup(@RequestBody Map<String, Long> data, HttpServletRequest request) throws ServletException {
+        securityService.checkToken(request);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            GroupForecast groupForecast = mpsService.findGroupById(data.get("id"));
+            mpsService.deleteGroupForecast(groupForecast);
+            jsonObject.put("message", "success");
+            return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ServletException("save fail");
+        }
+    }
+
     @RequestMapping(value = "/searchgroupslimit", method = RequestMethod.GET, headers = "Content-Type=Application/json")
     public ResponseEntity<String> searchGroupsLimit(@RequestParam(value = "start", required = true) Integer start,
                                                  @RequestParam(value = "limit", required = true) Integer limit,

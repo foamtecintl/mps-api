@@ -40,6 +40,11 @@ public class GroupForecastRepositoryImpl implements GroupForecastRepository {
         return groupForecast;
     }
 
+    @Override
+    public void deleteGroup(GroupForecast groupForecast) {
+        entityManager.remove(groupForecast);
+    }
+
     public GroupForecast update(GroupForecast groupForecast) {
         entityManager.merge(groupForecast);
         entityManager.flush();
