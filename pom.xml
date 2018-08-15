@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>mps</name>
-	<description>Demo project for Spring Boot</description>
+	<description>MPS project for Spring Boot</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
