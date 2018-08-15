@@ -36,6 +36,11 @@ public class ForecastRepositoryImpl implements ForecastRepository {
     }
 
     @Override
+    public void delete(Forecast forecast) {
+        entityManager.remove(forecast);
+    }
+
+    @Override
     public Forecast findByForecastNo(String forecastNumber) {
         Query query = entityManager.createQuery("SELECT a FROM Forecast a WHERE a.forecastNumber = :forecastNumber");
         query.setParameter("forecastNumber", forecastNumber);

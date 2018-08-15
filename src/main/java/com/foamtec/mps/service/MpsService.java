@@ -88,6 +88,14 @@ public class MpsService {
         return forecastRepository.save(forecast);
     }
 
+    public Forecast findForecastById(Long id) {
+        return forecastRepository.findById(id);
+    }
+
+    public void deleteForecast(Forecast forecast) {
+        forecastRepository.delete(forecast);
+    }
+
     public Forecast updateForecast(Forecast forecast) {
         return forecastRepository.update(forecast);
     }
