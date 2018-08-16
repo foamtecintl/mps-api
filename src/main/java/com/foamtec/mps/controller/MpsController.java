@@ -222,10 +222,14 @@ public class MpsController {
     @RequestMapping(value = "/updateforecastbyexcelfile", method = RequestMethod.POST, headers = "Accept=application/json")
     @ResponseBody
     public ResponseEntity<String> updateForecastByExcelFile(MultipartHttpServletRequest multipartHttpServletRequest) throws ServletException {
-        securityService.checkToken(multipartHttpServletRequest);
-        MultipartFile multipartFile = multipartHttpServletRequest.getFile("file");
         try {
-            XSSFWorkbook wb = new XSSFWorkbook(multipartFile.getInputStream());
+            securityService.checkToken(multipartHttpServletRequest);
+            MultipartFile file = multipartHttpServletRequest.getFile("file");
+            if(file == null) {
+                throw new ServletException("Not file upload.");
+            }
+
+            XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
             XSSFSheet sheet = wb.getSheetAt(0);
 
             int lastRows = sheet.getLastRowNum();
@@ -263,6 +267,7 @@ public class MpsController {
             jsonObject.put("dataForecast", jsonArray);
             return new ResponseEntity<>(jsonObject.toString(), securityService.getHeader(), HttpStatus.OK);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ServletException("fail");
         }
     }
